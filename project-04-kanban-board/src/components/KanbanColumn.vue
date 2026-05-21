@@ -6,7 +6,6 @@
     @dragleave="onDragLeave"
     @drop.prevent="onDrop"
   >
-    <!-- Column header -->
     <div class="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
       <div class="flex items-center gap-2.5">
         <div class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: column.color }" />
@@ -18,7 +17,6 @@
       </div>
     </div>
 
-    <!-- Cards list -->
     <div class="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 min-h-[120px]">
       <KanbanCard
         v-for="card in cards"
@@ -28,7 +26,6 @@
         @drag-end="$emit('drag-end')"
       />
 
-      <!-- Empty state -->
       <div
         v-if="cards.length === 0 && !isDropTarget"
         class="flex flex-col items-center justify-center py-8 text-center"
@@ -38,7 +35,6 @@
         <p class="text-xs text-gray-300">Glissez une carte ou ajoutez-en une</p>
       </div>
 
-      <!-- Drop placeholder -->
       <div
         v-if="isDropTarget"
         class="h-16 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50 flex items-center justify-center"
@@ -47,7 +43,6 @@
       </div>
     </div>
 
-    <!-- Add card area -->
     <div class="px-3 pb-3">
       <div v-if="!isAdding">
         <button
@@ -101,7 +96,7 @@
 import { ref, nextTick } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import { useKanbanStore } from '../stores/kanban'
-import type { Card, Column, ColumnId } from '../types/kanban'
+import type { Card, Column } from '../types/kanban'
 
 const props = defineProps<{
   column: Column
@@ -121,7 +116,7 @@ const newCardTitle = ref('')
 const addInputRef = ref<HTMLInputElement | null>(null)
 
 function onDragOver(): void {
-  if (props.draggingCardId) isDropTarget.value = true
+  if (props.draggingCardId && !isDropTarget.value) isDropTarget.value = true
 }
 
 function onDragLeave(): void {
@@ -131,7 +126,7 @@ function onDragLeave(): void {
 function onDrop(e: DragEvent): void {
   isDropTarget.value = false
   const cardId = e.dataTransfer?.getData('text/plain')
-  if (cardId) store.moveCard(cardId, props.column.id as ColumnId)
+  if (cardId) store.moveCard(cardId, props.column.id)
 }
 
 async function startAdding(): Promise<void> {
@@ -142,7 +137,7 @@ async function startAdding(): Promise<void> {
 
 function saveCard(): void {
   if (!newCardTitle.value.trim()) return
-  store.addCard(props.column.id as ColumnId, newCardTitle.value)
+  store.addCard(props.column.id, newCardTitle.value)
   newCardTitle.value = ''
   isAdding.value = false
 }

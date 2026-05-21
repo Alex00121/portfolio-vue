@@ -6,15 +6,13 @@
     :class="[priorityBorderClass, isDragging ? 'opacity-40 scale-95' : '']"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
-    @keydown.delete.stop="onDeleteKey"
+    @keydown.delete.stop="confirmDelete"
     :tabindex="0"
     @click="store.selectCard(card.id)"
   >
-    <!-- Priority left border accent -->
     <div class="absolute left-0 top-2 bottom-2 w-1 rounded-full" :class="priorityBarClass" />
 
     <div class="pl-4 pr-3 py-3">
-      <!-- Header: title + action icons -->
       <div class="flex items-start justify-between gap-2">
         <h3 class="text-sm font-semibold text-gray-800 leading-snug flex-1 line-clamp-2">
           {{ card.title }}
@@ -41,12 +39,10 @@
         </div>
       </div>
 
-      <!-- Description preview -->
       <p v-if="card.description" class="mt-1 text-xs text-gray-500 line-clamp-2 leading-relaxed">
         {{ card.description }}
       </p>
 
-      <!-- Footer: priority badge + due date -->
       <div class="mt-2.5 flex items-center gap-2 flex-wrap">
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" :class="priorityBadgeClass">
           {{ store.priorityLabel(card.priority) }}
@@ -109,10 +105,6 @@ function onDragStart(e: DragEvent): void {
 function onDragEnd(): void {
   isDragging.value = false
   emit('drag-end')
-}
-
-function onDeleteKey(): void {
-  confirmDelete()
 }
 
 function confirmDelete(): void {

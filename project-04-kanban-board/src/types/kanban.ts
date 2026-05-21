@@ -18,8 +18,3 @@ export interface Column {
   color: string
 }
 
-export interface DragState {
-  cardId: string | null
-  sourceColumnId: ColumnId | null
-  overColumnId: ColumnId | null
-}

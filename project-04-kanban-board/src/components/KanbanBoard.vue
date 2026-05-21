@@ -15,7 +15,6 @@
           </div>
         </div>
 
-        <!-- Stats -->
         <div class="hidden sm:flex items-center gap-4">
           <div
             v-for="col in store.COLUMNS"
@@ -27,10 +26,9 @@
             <span class="font-bold text-gray-800">{{ store.getCardsByColumn(col.id).length }}</span>
           </div>
           <div class="h-4 w-px bg-gray-200 mx-1" />
-          <span class="text-xs text-gray-400 font-medium">{{ totalCards }} cartes au total</span>
+          <span class="text-xs text-gray-400 font-medium">{{ store.cards.length }} cartes au total</span>
         </div>
 
-        <!-- Keyboard hint -->
         <div class="hidden lg:flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200">
           <kbd class="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-500 font-mono text-xs shadow-sm">Suppr</kbd>
           <span>supprime la carte sélectionnée</span>
@@ -38,7 +36,6 @@
       </div>
     </header>
 
-    <!-- Board -->
     <main class="max-w-7xl mx-auto px-6 py-8">
       <div class="flex gap-6 overflow-x-auto pb-4">
         <KanbanColumn
@@ -53,21 +50,18 @@
       </div>
     </main>
 
-    <!-- Card Modal -->
     <CardModal />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useKanbanStore } from '../stores/kanban'
 import KanbanColumn from './KanbanColumn.vue'
 import CardModal from './CardModal.vue'
 
 const store = useKanbanStore()
 const draggingCardId = ref<string | null>(null)
-
-const totalCards = computed(() => store.cards.length)
 
 function onKeyDown(e: KeyboardEvent): void {
   if (e.key === 'Delete' && store.selectedCardId) {
