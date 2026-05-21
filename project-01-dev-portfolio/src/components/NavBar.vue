@@ -6,12 +6,10 @@
     ]"
   >
     <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
-      <!-- Logo -->
       <a href="#hero" class="text-xl font-bold text-gradient tracking-tight">
         Alexandre.dev
       </a>
 
-      <!-- Desktop Nav -->
       <ul class="hidden md:flex items-center gap-8">
         <li v-for="link in navLinks" :key="link.href">
           <a
@@ -24,7 +22,6 @@
         </li>
       </ul>
 
-      <!-- CTA -->
       <a
         href="#contact"
         class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/20 border border-purple-500/40 text-purple-300 text-sm font-medium hover:bg-purple-500/30 hover:border-purple-500/60 transition-all duration-200 active:scale-95"
@@ -33,7 +30,6 @@
         Me contacter
       </a>
 
-      <!-- Mobile Hamburger -->
       <button
         class="md:hidden flex flex-col gap-1.5 p-2"
         @click="mobileOpen = !mobileOpen"
@@ -45,7 +41,6 @@
       </button>
     </div>
 
-    <!-- Mobile Menu -->
     <transition name="slide-down">
       <div v-if="mobileOpen" class="md:hidden glass mt-2 mx-4 rounded-2xl px-6 py-4">
         <ul class="flex flex-col gap-4">
@@ -66,6 +61,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useScrollTo } from '../composables/useScrollTo.js'
+
+const { scrollTo } = useScrollTo()
 
 const scrolled = ref(false)
 const mobileOpen = ref(false)
@@ -79,25 +77,27 @@ const navLinks = [
   { href: '#contact', label: 'Contact', section: 'contact' },
 ]
 
-function scrollTo(href) {
-  const el = document.querySelector(href)
-  if (el) el.scrollIntoView({ behavior: 'smooth' })
-}
+const SECTION_IDS = ['hero', 'about', 'skills', 'projects', 'contact']
+const SECTIONS_REVERSED = [...SECTION_IDS].reverse()
+
+let sectionEls = []
 
 function handleScroll() {
   scrolled.value = window.scrollY > 50
-
-  const sections = ['hero', 'about', 'skills', 'projects', 'contact']
-  for (const s of [...sections].reverse()) {
-    const el = document.getElementById(s)
+  for (const id of SECTIONS_REVERSED) {
+    const el = sectionEls[id]
     if (el && window.scrollY >= el.offsetTop - 100) {
-      activeSection.value = s
+      if (activeSection.value !== id) activeSection.value = id
       break
     }
   }
 }
 
-onMounted(() => window.addEventListener('scroll', handleScroll))
+onMounted(() => {
+  SECTION_IDS.forEach((id) => { sectionEls[id] = document.getElementById(id) })
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
 onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 </script>
 

@@ -71,9 +71,9 @@
                   v-model="form.lastName"
                   type="text"
                   placeholder="Dupont"
-                  required
                   class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500/60 focus:ring-1 focus:ring-purple-500/30 transition-all duration-200"
                 />
+                <p v-if="errors.lastName" class="text-red-400 text-xs mt-1">{{ errors.lastName }}</p>
               </div>
             </div>
 
@@ -103,6 +103,7 @@
                 <option>Question technique</option>
                 <option>Autre</option>
               </select>
+              <p v-if="errors.subject" class="text-red-400 text-xs mt-1">{{ errors.subject }}</p>
             </div>
 
             <div>
@@ -156,7 +157,9 @@ const form = reactive({
 
 const errors = reactive({
   firstName: '',
+  lastName: '',
   email: '',
+  subject: '',
   message: '',
 })
 
@@ -170,15 +173,25 @@ const contactInfo = [
 function validate() {
   let valid = true
   errors.firstName = ''
+  errors.lastName = ''
   errors.email = ''
+  errors.subject = ''
   errors.message = ''
 
   if (form.firstName.trim().length < 2) {
     errors.firstName = 'Le prénom doit faire au moins 2 caractères.'
     valid = false
   }
+  if (form.lastName.trim().length < 2) {
+    errors.lastName = 'Le nom doit faire au moins 2 caractères.'
+    valid = false
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
     errors.email = 'Adresse email invalide.'
+    valid = false
+  }
+  if (!form.subject) {
+    errors.subject = 'Veuillez choisir un sujet.'
     valid = false
   }
   if (form.message.trim().length < 10) {

@@ -10,7 +10,6 @@
         </h2>
       </div>
 
-      <!-- Skill categories -->
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
           v-for="category in skillCategories"
@@ -31,11 +30,8 @@
               </div>
               <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  class="h-full rounded-full skill-bar-fill"
-                  :style="{
-                    width: animated ? skill.level + '%' : '0%',
-                    background: 'linear-gradient(to right, #a855f7, #ec4899)'
-                  }"
+                  class="h-full rounded-full skill-bar-fill skill-bar-gradient"
+                  :style="{ width: animated ? skill.level + '%' : '0%' }"
                 />
               </div>
             </div>
@@ -47,7 +43,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import { useIntersectionObserver } from '../composables/useIntersectionObserver.js'
 
 const animated = ref(false)
 
@@ -120,19 +117,11 @@ const skillCategories = [
   },
 ]
 
-onMounted(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          animated.value = true
-          observer.disconnect()
-        }
-      })
-    },
-    { threshold: 0.2 }
-  )
-  const section = document.getElementById('skills')
-  if (section) observer.observe(section)
-})
+useIntersectionObserver('skills', () => { animated.value = true }, { threshold: 0.2 })
 </script>
+
+<style scoped>
+.skill-bar-gradient {
+  background: linear-gradient(to right, #a855f7, #ec4899);
+}
+</style>

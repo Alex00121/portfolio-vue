@@ -1,11 +1,9 @@
 <template>
   <section id="about" class="py-24 bg-[#12103a] relative overflow-hidden">
-    <!-- Background accent -->
     <div class="absolute top-0 left-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
 
     <div class="max-w-6xl mx-auto px-6">
       <div class="gsap-section flex flex-col lg:flex-row gap-16 items-center">
-        <!-- Photo placeholder -->
         <div class="flex-shrink-0">
           <div class="relative w-64 h-64 rounded-3xl overflow-hidden glow-purple">
             <div class="w-full h-full" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 40%, #ec4899 100%)" />
@@ -16,14 +14,12 @@
               <span class="text-sm font-medium text-white/70">Alexandre Leclerc</span>
             </div>
           </div>
-          <!-- Status badge -->
           <div class="mt-4 flex items-center justify-center gap-2 glass rounded-xl px-4 py-2">
             <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <span class="text-sm text-slate-300">Disponible pour missions</span>
           </div>
         </div>
 
-        <!-- Content -->
         <div class="flex-1">
           <p class="text-purple-400 font-semibold text-sm tracking-widest uppercase mb-3">À propos</p>
           <h2 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-6">
@@ -42,7 +38,6 @@
             via des articles techniques.
           </p>
 
-          <!-- Stats counters -->
           <div class="grid grid-cols-3 gap-6">
             <div
               v-for="stat in stats"
@@ -62,12 +57,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
+import { useIntersectionObserver } from '../composables/useIntersectionObserver.js'
 
 const stats = ref([
-  { label: "Années d'expérience", target: 5, suffix: '+', animated: '0' },
-  { label: 'Projets livrés', target: 42, suffix: '+', animated: '0' },
-  { label: 'Clients satisfaits', target: 28, suffix: '', animated: '0' },
+  { label: "Années d'expérience", target: 5, suffix: '+', animated: 0 },
+  { label: 'Projets livrés', target: 42, suffix: '+', animated: 0 },
+  { label: 'Clients satisfaits', target: 28, suffix: '', animated: 0 },
 ])
 
 function animateCounter(stat) {
@@ -77,25 +73,11 @@ function animateCounter(stat) {
     const elapsed = now - start
     const progress = Math.min(elapsed / duration, 1)
     const eased = 1 - Math.pow(1 - progress, 3)
-    stat.animated = Math.round(eased * stat.target).toString()
+    stat.animated = Math.round(eased * stat.target)
     if (progress < 1) requestAnimationFrame(update)
   }
   requestAnimationFrame(update)
 }
 
-onMounted(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          stats.value.forEach(animateCounter)
-          observer.disconnect()
-        }
-      })
-    },
-    { threshold: 0.3 }
-  )
-  const section = document.getElementById('about')
-  if (section) observer.observe(section)
-})
+useIntersectionObserver('about', () => stats.value.forEach(animateCounter), { threshold: 0.3 })
 </script>
