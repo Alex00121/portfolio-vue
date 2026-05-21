@@ -61,7 +61,6 @@ function handleSubmit() {
 
 function clear() {
   localQuery.value = ''
-  emit('update:modelValue', '')
   emit('search', '')
 }
 </script>

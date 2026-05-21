@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 export interface FavoriteRecipe {
   idMeal: string
@@ -13,13 +13,9 @@ export const useFavoritesStore = defineStore('favorites', () => {
   const stored = localStorage.getItem('recipe-favorites')
   const favorites = ref<FavoriteRecipe[]>(stored ? JSON.parse(stored) : [])
 
-  watch(
-    favorites,
-    (val) => {
-      localStorage.setItem('recipe-favorites', JSON.stringify(val))
-    },
-    { deep: true }
-  )
+  function persist() {
+    localStorage.setItem('recipe-favorites', JSON.stringify(favorites.value))
+  }
 
   function toggle(recipe: FavoriteRecipe) {
     const idx = favorites.value.findIndex((f) => f.idMeal === recipe.idMeal)
@@ -28,11 +24,17 @@ export const useFavoritesStore = defineStore('favorites', () => {
     } else {
       favorites.value.splice(idx, 1)
     }
+    persist()
   }
 
   function isFavorite(idMeal: string) {
     return favorites.value.some((f) => f.idMeal === idMeal)
   }
 
-  return { favorites, toggle, isFavorite }
+  function clearAll() {
+    favorites.value.splice(0)
+    persist()
+  }
+
+  return { favorites, toggle, isFavorite, clearAll }
 })

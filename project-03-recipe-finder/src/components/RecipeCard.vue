@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import type { MealSummary } from '../composables/useMealDB'
 import { useFavoritesStore } from '../stores/favorites'
 
@@ -71,10 +71,15 @@ const props = defineProps<{
 const favoritesStore = useFavoritesStore()
 const isFav = computed(() => favoritesStore.isFavorite(props.meal.idMeal))
 const heartAnimating = ref(false)
+let heartTimer: ReturnType<typeof setTimeout> | null = null
+
+onUnmounted(() => {
+  if (heartTimer !== null) clearTimeout(heartTimer)
+})
 
 function handleFavorite() {
   heartAnimating.value = true
-  setTimeout(() => { heartAnimating.value = false }, 300)
+  heartTimer = setTimeout(() => { heartAnimating.value = false }, 300)
   favoritesStore.toggle({
     idMeal: props.meal.idMeal,
     strMeal: props.meal.strMeal,

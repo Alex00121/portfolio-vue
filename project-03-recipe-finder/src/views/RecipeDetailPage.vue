@@ -142,7 +142,7 @@
                     <span v-if="checkedIngredients.has(idx)" class="text-xs font-bold">✓</span>
                   </div>
                   <span :class="['text-sm flex-1', checkedIngredients.has(idx) ? 'line-through text-gray-400' : 'text-gray-700']">
-                    <span class="font-medium">{{ scaledMeasure(ing.measure) }}</span>
+                    <span class="font-medium">{{ ing.measure }}</span>
                     {{ ing.ingredient }}
                   </span>
                 </li>
@@ -198,8 +198,15 @@ const isFav = computed(() =>
   meal.value ? favoritesStore.isFavorite(meal.value.idMeal) : false
 )
 
-const ingredients = computed(() =>
+const rawIngredients = computed(() =>
   meal.value ? extractIngredients(meal.value) : []
+)
+
+const ingredients = computed(() =>
+  rawIngredients.value.map((ing) => ({
+    ingredient: ing.ingredient,
+    measure: scaleMeasure(ing.measure, servings.value),
+  }))
 )
 
 const tags = computed(() => {
@@ -215,21 +222,31 @@ const steps = computed(() => {
     .filter((s) => s.length > 10)
 })
 
-function scaledMeasure(measure: string): string {
+function parseFraction(s: string): number {
+  const mixed = s.trim().match(/^(\d+)\s+(\d+)\/(\d+)$/)
+  if (mixed) return +mixed[1] + +mixed[2] / +mixed[3]
+  const frac = s.trim().match(/^(\d+)\/(\d+)$/)
+  if (frac) return +frac[1] / +frac[2]
+  return parseFloat(s) || 0
+}
+
+function scaleMeasure(measure: string, scale: number): string {
   if (!measure) return ''
-  const match = measure.match(/^([\d./]+)\s*(.*)$/)
+  const match = measure.match(/^([\d./]+(?:\s+\d+\/\d+)?)\s*(.*)$/)
   if (!match) return measure
-  const num = eval(match[1]) as number
-  const scaled = ((num * servings.value) / 4).toFixed(match[2].toLowerCase().includes('tsp') || match[2].toLowerCase().includes('tbsp') ? 1 : 0)
-  const cleanedScaled = parseFloat(scaled).toString()
-  return `${cleanedScaled} ${match[2]}`.trim()
+  const num = parseFraction(match[1])
+  const unit = match[2]
+  const scaled = (num * scale) / 4
+  const decimals = unit.toLowerCase().includes('tsp') || unit.toLowerCase().includes('tbsp') ? 1 : 0
+  return `${parseFloat(scaled.toFixed(decimals))} ${unit}`.trim()
 }
 
 function toggleIngredient(idx: number) {
-  const next = new Set(checkedIngredients.value)
-  if (next.has(idx)) next.delete(idx)
-  else next.add(idx)
-  checkedIngredients.value = next
+  if (checkedIngredients.value.has(idx)) {
+    checkedIngredients.value.delete(idx)
+  } else {
+    checkedIngredients.value.add(idx)
+  }
 }
 
 function toggleFavorite() {

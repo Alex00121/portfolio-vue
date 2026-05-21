@@ -26,8 +26,8 @@
         <FiltersBar
           :categories="categories"
           :areas="areas"
-          v-model:selectedCategory="selectedCategory"
-          v-model:selectedArea="selectedArea"
+          :selectedCategory="selectedCategory"
+          :selectedArea="selectedArea"
           @update:selectedCategory="onCategoryChange"
           @update:selectedArea="onAreaChange"
         />
@@ -163,16 +163,16 @@ async function onCategoryChange(cat: string) {
   selectedArea.value = ''
   searchQuery.value = ''
   lastSearch.value = ''
-  loading.value = true
   error.value = ''
+  if (!cat) {
+    await loadDefault()
+    activeFilter.value = ''
+    return
+  }
+  loading.value = true
   try {
-    if (!cat) {
-      await loadDefault()
-      activeFilter.value = ''
-    } else {
-      meals.value = await filterByCategory(cat)
-      activeFilter.value = `Catégorie : ${cat}`
-    }
+    meals.value = await filterByCategory(cat)
+    activeFilter.value = `Catégorie : ${cat}`
   } catch {
     error.value = 'Erreur lors du filtrage.'
   } finally {
@@ -185,16 +185,16 @@ async function onAreaChange(area: string) {
   selectedCategory.value = ''
   searchQuery.value = ''
   lastSearch.value = ''
-  loading.value = true
   error.value = ''
+  if (!area) {
+    await loadDefault()
+    activeFilter.value = ''
+    return
+  }
+  loading.value = true
   try {
-    if (!area) {
-      await loadDefault()
-      activeFilter.value = ''
-    } else {
-      meals.value = await filterByArea(area)
-      activeFilter.value = `Cuisine : ${area}`
-    }
+    meals.value = await filterByArea(area)
+    activeFilter.value = `Cuisine : ${area}`
   } catch {
     error.value = 'Erreur lors du filtrage.'
   } finally {
@@ -231,8 +231,11 @@ function retry() {
 }
 
 onMounted(async () => {
-  await loadDefault()
-  const [cats, areasData] = await Promise.all([getCategories(), getAreas()])
+  const [, cats, areasData] = await Promise.all([
+    loadDefault(),
+    getCategories(),
+    getAreas(),
+  ])
   categories.value = cats
   areas.value = areasData
 })
