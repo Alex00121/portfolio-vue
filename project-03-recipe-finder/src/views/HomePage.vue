@@ -158,21 +158,23 @@ async function onSearch(query: string) {
   }
 }
 
-async function onCategoryChange(cat: string) {
-  selectedCategory.value = cat
-  selectedArea.value = ''
+async function applyFilter(type: 'category' | 'area', value: string) {
+  if (type === 'category') { selectedCategory.value = value; selectedArea.value = '' }
+  else { selectedArea.value = value; selectedCategory.value = '' }
   searchQuery.value = ''
   lastSearch.value = ''
   error.value = ''
-  if (!cat) {
+  if (!value) {
     await loadDefault()
     activeFilter.value = ''
     return
   }
   loading.value = true
   try {
-    meals.value = await filterByCategory(cat)
-    activeFilter.value = `Catégorie : ${cat}`
+    meals.value = type === 'category'
+      ? await filterByCategory(value)
+      : await filterByArea(value)
+    activeFilter.value = type === 'category' ? `Catégorie : ${value}` : `Cuisine : ${value}`
   } catch {
     error.value = 'Erreur lors du filtrage.'
   } finally {
@@ -180,27 +182,8 @@ async function onCategoryChange(cat: string) {
   }
 }
 
-async function onAreaChange(area: string) {
-  selectedArea.value = area
-  selectedCategory.value = ''
-  searchQuery.value = ''
-  lastSearch.value = ''
-  error.value = ''
-  if (!area) {
-    await loadDefault()
-    activeFilter.value = ''
-    return
-  }
-  loading.value = true
-  try {
-    meals.value = await filterByArea(area)
-    activeFilter.value = `Cuisine : ${area}`
-  } catch {
-    error.value = 'Erreur lors du filtrage.'
-  } finally {
-    loading.value = false
-  }
-}
+function onCategoryChange(cat: string) { return applyFilter('category', cat) }
+function onAreaChange(area: string) { return applyFilter('area', area) }
 
 async function loadRandom() {
   loadingRandom.value = true

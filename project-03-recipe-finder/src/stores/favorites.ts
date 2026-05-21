@@ -11,7 +11,11 @@ export interface FavoriteRecipe {
 
 export const useFavoritesStore = defineStore('favorites', () => {
   const stored = localStorage.getItem('recipe-favorites')
-  const favorites = ref<FavoriteRecipe[]>(stored ? JSON.parse(stored) : [])
+  let parsed: FavoriteRecipe[] = []
+  if (stored) {
+    try { parsed = JSON.parse(stored) } catch { /* ignore corrupted data */ }
+  }
+  const favorites = ref<FavoriteRecipe[]>(parsed)
 
   function persist() {
     localStorage.setItem('recipe-favorites', JSON.stringify(favorites.value))
