@@ -43,10 +43,10 @@
             </span>
           </div>
           <p
-            v-if="getLastMessage(room)"
+            v-if="lastMessages[room]"
             class="text-xs text-white/40 truncate mt-0.5 group-hover:text-white/50 transition-colors"
           >
-            {{ getLastMessage(room)?.username }}: {{ getLastMessage(room)?.content }}
+            {{ lastMessages[room]?.username }}: {{ lastMessages[room]?.content }}
           </p>
         </div>
       </button>
@@ -67,9 +67,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useChat, rooms, type Room } from '../composables/useChat'
 
 const { unreadCounts, currentRoom, onlineCount, getLastMessage, getRoomIcon } = useChat()
+
+const lastMessages = computed(() =>
+  Object.fromEntries(rooms.map(r => [r, getLastMessage(r)])) as Record<Room, ReturnType<typeof getLastMessage>>
+)
 
 defineEmits<{
   'switch-room': [room: Room]

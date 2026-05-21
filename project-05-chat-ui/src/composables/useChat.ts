@@ -82,15 +82,20 @@ function setTyping(room: Room | null) {
 }
 
 function startBotSimulation() {
+  let pendingBotTimeout: ReturnType<typeof setTimeout> | null = null
+
   setInterval(() => {
+    if (pendingBotTimeout) clearTimeout(pendingBotTimeout)
+
     const delay = Math.floor(Math.random() * 7000) + 8000
     const targetRoom = rooms[Math.floor(Math.random() * rooms.length)]
 
-    setTimeout(() => {
+    pendingBotTimeout = setTimeout(() => {
       setTyping(targetRoom)
       setTimeout(() => {
         setTyping(null)
         addBotMessage(targetRoom)
+        pendingBotTimeout = null
       }, 1500)
     }, delay)
   }, 10000)

@@ -14,7 +14,7 @@
     </div>
 
     <!-- Messages -->
-    <div ref="messagesContainer" class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+    <div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
       <MessageBubble
         v-for="msg in currentMessages"
         :key="msg.id"
@@ -78,7 +78,6 @@ const { messages, typingRoom, currentRoom, onlineCount, getRoomIcon, sendMessage
 
 const inputText = ref('')
 const showEmoji = ref(false)
-const messagesContainer = ref<HTMLElement | null>(null)
 const scrollAnchor = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 
@@ -109,7 +108,6 @@ function onSend() {
   sendMessage(inputText.value)
   inputText.value = ''
   showEmoji.value = false
-  scrollToBottom()
 }
 
 function onEmojiPick(emoji: string) {

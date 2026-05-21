@@ -7,7 +7,7 @@
     <div
       v-if="!message.isOwn"
       class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1"
-      :style="{ background: getAvatarGradient(message.username) }"
+      :style="{ background: userStyle.gradient }"
     >
       {{ message.username.charAt(0).toUpperCase() }}
     </div>
@@ -17,7 +17,7 @@
       <span
         v-if="!message.isOwn"
         class="text-[11px] font-semibold mb-1 px-1"
-        :style="{ color: getNameColor(message.username) }"
+        :style="{ color: userStyle.nameColor }"
       >
         {{ message.username }}
       </span>
@@ -39,9 +39,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Message } from '../data/seedMessages'
 
-defineProps<{ message: Message }>()
+const props = defineProps<{ message: Message }>()
 
 const avatarGradients = [
   'linear-gradient(135deg, #6366f1, #8b5cf6)',
@@ -63,13 +64,13 @@ function hashStr(str: string): number {
   return Math.abs(hash)
 }
 
-function getAvatarGradient(username: string): string {
-  return avatarGradients[hashStr(username) % avatarGradients.length]
-}
-
-function getNameColor(username: string): string {
-  return nameColors[hashStr(username) % nameColors.length]
-}
+const userStyle = computed(() => {
+  const hash = hashStr(props.message.username)
+  return {
+    gradient: avatarGradients[hash % avatarGradients.length],
+    nameColor: nameColors[hash % nameColors.length],
+  }
+})
 
 function formatTime(date: Date): string {
   const now = new Date()
