@@ -8,7 +8,7 @@ function generateId(): string {
 }
 
 function getMonthKey(date: string): string {
-  return date.slice(0, 7) // YYYY-MM
+  return date.slice(0, 7)
 }
 
 const SEED_TRANSACTIONS: Transaction[] = [
@@ -38,7 +38,6 @@ const SEED_TRANSACTIONS: Transaction[] = [
   { id: '24', type: 'income', amount: 3200, category: 'Autre', description: 'Salaire novembre', date: '2025-11-01', createdAt: '2025-11-01T08:00:00Z' },
   { id: '25', type: 'expense', amount: 850, category: 'Logement', description: 'Loyer novembre', date: '2025-11-03', createdAt: '2025-11-03T09:00:00Z' },
   { id: '26', type: 'expense', amount: 112, category: 'Alimentation', description: 'Courses semaine', date: '2025-11-09', createdAt: '2025-11-09T11:00:00Z' },
-  // May 2026
   { id: '27', type: 'income', amount: 3200, category: 'Autre', description: 'Salaire mai', date: '2026-05-01', createdAt: '2026-05-01T08:00:00Z' },
   { id: '28', type: 'expense', amount: 850, category: 'Logement', description: 'Loyer mai', date: '2026-05-03', createdAt: '2026-05-03T09:00:00Z' },
   { id: '29', type: 'expense', amount: 89.60, category: 'Alimentation', description: 'Monoprix', date: '2026-05-10', createdAt: '2026-05-10T11:00:00Z' },
@@ -49,6 +48,17 @@ const DEFAULT_BUDGETS: BudgetLimit[] = EXPENSE_CATEGORIES.map((cat) => ({
   category: cat,
   limit: cat === 'Logement' ? 1000 : cat === 'Alimentation' ? 300 : cat === 'Transport' ? 150 : 200,
 }))
+
+function sumIncomeExpenses(txs: Transaction[]): { income: number; expenses: number } {
+  return txs.reduce(
+    (acc, t) => {
+      if (t.type === 'income') acc.income += t.amount
+      else acc.expenses += t.amount
+      return acc
+    },
+    { income: 0, expenses: 0 }
+  )
+}
 
 export const useFinanceStore = defineStore(
   'finance',
@@ -75,26 +85,21 @@ export const useFinanceStore = defineStore(
       transactions.value.filter((t) => getMonthKey(t.date) === previousMonthKey.value)
     )
 
-    function sumByType(txs: Transaction[], type: TransactionType): number {
-      return txs.filter((t) => t.type === type).reduce((sum, t) => sum + t.amount, 0)
-    }
+    const currentMonthTotals = computed(() => sumIncomeExpenses(currentMonthTransactions.value))
+    const prevMonthTotals = computed(() => sumIncomeExpenses(previousMonthTransactions.value))
 
-    const currentIncome = computed(() => sumByType(currentMonthTransactions.value, 'income'))
-    const currentExpenses = computed(() => sumByType(currentMonthTransactions.value, 'expense'))
+    const currentIncome = computed(() => currentMonthTotals.value.income)
+    const currentExpenses = computed(() => currentMonthTotals.value.expenses)
     const currentBalance = computed(() => currentIncome.value - currentExpenses.value)
     const currentSavingsRate = computed(() =>
-      currentIncome.value > 0
-        ? Math.round(((currentIncome.value - currentExpenses.value) / currentIncome.value) * 100)
-        : 0
+      currentIncome.value > 0 ? Math.round((currentBalance.value / currentIncome.value) * 100) : 0
     )
 
-    const prevIncome = computed(() => sumByType(previousMonthTransactions.value, 'income'))
-    const prevExpenses = computed(() => sumByType(previousMonthTransactions.value, 'expense'))
+    const prevIncome = computed(() => prevMonthTotals.value.income)
+    const prevExpenses = computed(() => prevMonthTotals.value.expenses)
     const prevBalance = computed(() => prevIncome.value - prevExpenses.value)
     const prevSavingsRate = computed(() =>
-      prevIncome.value > 0
-        ? Math.round(((prevIncome.value - prevExpenses.value) / prevIncome.value) * 100)
-        : 0
+      prevIncome.value > 0 ? Math.round((prevBalance.value / prevIncome.value) * 100) : 0
     )
 
     const last6MonthsData = computed(() => {
@@ -108,30 +113,40 @@ export const useFinanceStore = defineStore(
       }
       return months.map(({ key, label }) => {
         const monthTxs = transactions.value.filter((t) => getMonthKey(t.date) === key)
-        return {
-          label,
-          income: sumByType(monthTxs, 'income'),
-          expenses: sumByType(monthTxs, 'expense'),
-        }
+        const { income, expenses } = sumIncomeExpenses(monthTxs)
+        return { label, income, expenses }
       })
+    })
+
+    const budgetIndex = computed(() => {
+      const map: Partial<Record<Category, number>> = {}
+      budgets.value.forEach((b) => { map[b.category] = b.limit })
+      return map
     })
 
     const expensesByCategory = computed(() => {
       const result: Partial<Record<Category, number>> = {}
-      currentMonthTransactions.value
-        .filter((t) => t.type === 'expense')
-        .forEach((t) => {
+      for (const t of currentMonthTransactions.value) {
+        if (t.type === 'expense') {
           result[t.category] = (result[t.category] ?? 0) + t.amount
-        })
+        }
+      }
       return result
     })
 
-    function getBudgetUsage(category: Category): { spent: number; limit: number; pct: number } {
-      const spent = expensesByCategory.value[category] ?? 0
-      const budgetEntry = budgets.value.find((b) => b.category === category)
-      const limit = budgetEntry?.limit ?? 0
-      const pct = limit > 0 ? Math.min(Math.round((spent / limit) * 100), 100) : 0
-      return { spent, limit, pct }
+    const budgetUsageMap = computed(() => {
+      const map: Partial<Record<Category, { spent: number; limit: number; pct: number }>> = {}
+      for (const cat of EXPENSE_CATEGORIES) {
+        const spent = expensesByCategory.value[cat] ?? 0
+        const limit = budgetIndex.value[cat] ?? 0
+        const pct = limit > 0 ? Math.min(Math.round((spent / limit) * 100), 100) : 0
+        map[cat] = { spent, limit, pct }
+      }
+      return map
+    })
+
+    function getBudgetUsage(category: Category) {
+      return budgetUsageMap.value[category] ?? { spent: 0, limit: 0, pct: 0 }
     }
 
     function addTransaction(tx: Omit<Transaction, 'id' | 'createdAt'>) {
@@ -185,6 +200,7 @@ export const useFinanceStore = defineStore(
       prevSavingsRate,
       last6MonthsData,
       expensesByCategory,
+      budgetUsageMap,
       getBudgetUsage,
       addTransaction,
       deleteTransaction,

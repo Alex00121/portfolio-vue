@@ -38,30 +38,35 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
 import { useFinanceStore } from '../stores/financeStore'
 import { CATEGORY_COLORS } from '../types'
 import type { Category } from '../types'
+import { fmt } from '../utils/format'
 
-ChartJS.register(ArcElement, Tooltip, Legend)
+ChartJS.register(ArcElement, Tooltip)
 
 const store = useFinanceStore()
 
 const hasData = computed(() => Object.keys(store.expensesByCategory).length > 0)
 
-const sorted = computed(() => {
-  return Object.entries(store.expensesByCategory)
+const sorted = computed(() =>
+  Object.entries(store.expensesByCategory)
     .sort(([, a], [, b]) => b - a)
-    .map(([cat, val]) => ({ cat: cat as Category, val }))
-})
+    .map(([cat, val]) => ({
+      cat: cat as Category,
+      val,
+      color: CATEGORY_COLORS[cat as Category],
+    }))
+)
 
 const total = computed(() => sorted.value.reduce((s, i) => s + i.val, 0))
 
 const legendItems = computed(() =>
-  sorted.value.map(({ cat, val }) => ({
+  sorted.value.map(({ cat, val, color }) => ({
     label: cat,
     value: val,
-    color: CATEGORY_COLORS[cat],
+    color,
     pct: total.value > 0 ? Math.round((val / total.value) * 100) : 0,
   }))
 )
@@ -71,7 +76,7 @@ const chartData = computed(() => ({
   datasets: [
     {
       data: sorted.value.map((i) => i.val),
-      backgroundColor: sorted.value.map((i) => CATEGORY_COLORS[i.cat]),
+      backgroundColor: sorted.value.map((i) => i.color),
       borderColor: '#ffffff',
       borderWidth: 2,
       hoverOffset: 6,
@@ -94,9 +99,5 @@ const chartOptions = {
       },
     },
   },
-}
-
-function fmt(n: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 }
 </script>

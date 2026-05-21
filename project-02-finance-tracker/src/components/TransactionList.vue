@@ -1,6 +1,5 @@
 <template>
   <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-    <!-- Toolbar -->
     <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
       <h2 class="text-lg font-bold text-slate-900">Toutes les transactions</h2>
       <div class="flex gap-2 flex-wrap">
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- Table -->
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -51,10 +49,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
-          <tr
-            v-if="paginatedRows.length === 0"
-            class="text-center"
-          >
+          <tr v-if="paginatedRows.length === 0">
             <td colspan="5" class="py-12 text-slate-400 text-sm">
               <div class="flex flex-col items-center gap-2">
                 <svg class="w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,7 +97,7 @@
                   tx.type === 'income' ? 'text-emerald-600' : 'text-red-600'
                 ]"
               >
-                {{ tx.type === 'income' ? '+' : '-' }}{{ fmt(tx.amount) }}
+                {{ tx.type === 'income' ? '+' : '-' }}{{ fmtDecimal(tx.amount) }}
               </span>
             </td>
             <td class="px-5 py-3.5 text-right">
@@ -120,7 +115,6 @@
       </table>
     </div>
 
-    <!-- Pagination -->
     <div class="px-5 py-4 border-t border-slate-100 flex items-center justify-between">
       <p class="text-sm text-slate-500">
         {{ filteredRows.length }} transaction{{ filteredRows.length > 1 ? 's' : '' }}
@@ -144,7 +138,6 @@
       </div>
     </div>
 
-    <!-- Delete confirmation modal -->
     <Teleport to="body">
       <Transition name="fade">
         <div v-if="pendingDeleteId" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -171,6 +164,7 @@ import { computed, ref, watch } from 'vue'
 import { useFinanceStore } from '../stores/financeStore'
 import type { Category, SortConfig } from '../types'
 import { CATEGORY_COLORS, EXPENSE_CATEGORIES } from '../types'
+import { fmtDecimal } from '../utils/format'
 
 const store = useFinanceStore()
 
@@ -200,30 +194,25 @@ function sortBy(field: SortConfig['field']) {
 }
 
 const filteredRows = computed(() => {
-  let rows = [...store.transactions]
+  let rows = store.transactions
   if (filterType.value !== 'all') rows = rows.filter((t) => t.type === filterType.value)
   if (filterCategory.value !== 'all') rows = rows.filter((t) => t.category === filterCategory.value)
-  rows.sort((a, b) => {
+  return [...rows].sort((a, b) => {
     const av = a[sort.value.field] as string | number
     const bv = b[sort.value.field] as string | number
     const dir = sort.value.direction === 'asc' ? 1 : -1
     return av < bv ? -dir : av > bv ? dir : 0
   })
-  return rows
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / PER_PAGE)))
 
-watch(filteredRows, () => { page.value = 1 })
+watch([filterType, filterCategory], () => { page.value = 1 })
 
 const paginatedRows = computed(() => {
   const start = (page.value - 1) * PER_PAGE
   return filteredRows.value.slice(start, start + PER_PAGE)
 })
-
-function fmt(n: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n)
-}
 
 function formatDate(d: string): string {
   return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })

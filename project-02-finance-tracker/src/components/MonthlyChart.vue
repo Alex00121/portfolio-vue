@@ -26,13 +26,12 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
-  Title,
   Tooltip,
-  Legend,
 } from 'chart.js'
 import { useFinanceStore } from '../stores/financeStore'
+import { fmt, fmtCompact } from '../utils/format'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
 const store = useFinanceStore()
 
@@ -67,10 +66,8 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: { dataset: { label: string }; parsed: { y: number } }) => {
-          const val = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(ctx.parsed.y)
-          return ` ${ctx.dataset.label}: ${val}`
-        },
+        label: (ctx: { dataset: { label: string }; parsed: { y: number } }) =>
+          ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
       },
     },
   },
@@ -84,8 +81,7 @@ const chartOptions = {
       ticks: {
         color: '#94a3b8',
         font: { size: 11 },
-        callback: (v: number | string) =>
-          new Intl.NumberFormat('fr-FR', { notation: 'compact', currency: 'EUR', style: 'currency', maximumFractionDigits: 0 }).format(Number(v)),
+        callback: (v: number | string) => fmtCompact(Number(v)),
       },
     },
   },

@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useFinanceStore } from '../stores/financeStore'
 import type { Category, TransactionType } from '../types'
 import { EXPENSE_CATEGORIES } from '../types'
@@ -144,6 +144,8 @@ const form = reactive({
 
 const errors = reactive({ amount: '', description: '' })
 const submitting = ref(false)
+let closeTimer: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => { if (closeTimer) clearTimeout(closeTimer) })
 
 const availableCategories = computed(() =>
   form.type === 'income' ? (['Autre'] as Category[]) : EXPENSE_CATEGORIES
@@ -178,7 +180,7 @@ function submit() {
     description: form.description.trim(),
     date: form.date,
   })
-  setTimeout(() => {
+  closeTimer = setTimeout(() => {
     submitting.value = false
     emit('close')
   }, 300)
